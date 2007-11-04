@@ -50,7 +50,7 @@
 		</copy>
 		
 		<delete file = "coremanifest.txt" quiet = "true" />
-		<LibCollector dir = "./lib" prefix = "./lib" mainClass = "de.berlios.marmota.core.server.Marmota" outfile = "coremanifest.txt" />
+		<LibCollector dir = "./lib" prefix = "./lib/" mainClass = "de.berlios.marmota.core.server.Marmota" outfile = "coremanifest.txt" />
 		
 		<jar  compress = "true" jarfile = "./publish/marmota.jar" manifest = "coremanifest.txt">
 			<fileset dir = "./coresystem/bin" includes="**" />

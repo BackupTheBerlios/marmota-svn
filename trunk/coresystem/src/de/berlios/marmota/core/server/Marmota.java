@@ -1,5 +1,12 @@
 package de.berlios.marmota.core.server;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.SimpleLayout;
+
 /*
  * Marmota - Open-Source, easy to use Groupware
  * Copyright (C) 2007  The Marmota Team
@@ -23,6 +30,11 @@ package de.berlios.marmota.core.server;
  * @author sparrow
  */
 public class Marmota {
+	
+	/**
+	 * Static instance to use the logging-system
+	 */
+	private static Logger logger = Logger.getRootLogger();
 	
 	/**
 	 * The programm's name
@@ -54,17 +66,32 @@ public class Marmota {
 		System.out.println(PNAME + " " + MAJORVERSION + "." + MINORVERSION + " " + VERSIONSUFFIX);
 		System.out.println("(c) by the Marmota team (2007)");
 		System.out.println("Visit: marmota.berlios.de");
-		startingCoreSystem();
+		startingLogSystem();
 		displaySmallLicenseMessage();
 	}
 	
+	
 	/**
-	 * This will start the coresystem
+	 * Init, config and starting the Log-System
 	 */
-	private static void startingCoreSystem() {
-		System.out.println("\nStarting the CORE System");
+	private static void startingLogSystem() {
+		System.out.println("\nStarting the logging-system");
+		try {
+			SimpleLayout simpLayout = new SimpleLayout();
+			ConsoleAppender consoleAppender = new ConsoleAppender(simpLayout);
+			logger.addAppender(consoleAppender);
+			PatternLayout patLayout = new PatternLayout("%d{ISO8601} %-5p [%t] %c: %m%n");
+			FileAppender fileAppender = new FileAppender(patLayout, "marmota_mess.log", false);
+			logger.addAppender(fileAppender);
+			// ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF:
+			logger.setLevel(Level.INFO);
+		} catch(Exception ex) {
+			System.out.println(ex);
+		}
+		logger.info("Logging system init");
 	}
 	
+
 	/**
 	 * This will display a small license information
 	 */
