@@ -1,0 +1,61 @@
+<project name = "Marmota" default = "info" basedir = ".">
+	
+	<taskdef name = "AntRecursiv" classname = "AntRecurser" classpath = "./antextensions"/>
+	<taskdef name = "LibCollector" classname = "MFLibCollector" classpath = "./antextensions"/>
+	
+	<target name = "info">
+		<echo message = "This is the ant buildfile for MARMOTA"/>
+		<echo message = "Please use the following syntax:"/>
+		<echo message = "ant clean           - cleanup all directories"/>
+		<echo message = "ant compilecore     - compile marmota core"/>
+		<echo message = "ant compileplugins  - compile marmota core"/>
+		<echo message = "ant publish         - compile and publish"/>
+		<echo message = "                      the core and all plugins"/>
+	</target>
+	
+	<target name = "clean">
+		<delete dir = "./publish" quiet = "true" includeEmptyDirs = "true" />
+		<delete file = "coremanifest.txt" quiet = "true" />
+		<AntRecursiv dir = "./coresystem" searchFile = "build.xml" target = "clean" />
+		<AntRecursiv dir = "./plugins" searchFile = "build.xml" target = "clean" />
+		<delete file = "coremanifest.txt" quiet = "true" />
+	</target>
+	
+	<target name = "compilecore" >
+		<AntRecursiv dir = "./coresystem" searchFile = "build.xml" target = "compile" />
+	</target>
+	
+	<target name = "compileplugins" >
+		<AntRecursiv dir = "./plugins" searchFile = "build.xml" target = "compile" />
+	</target>
+	
+	
+	<target name = "publish">
+		<AntRecursiv dir = "./coresystem" searchFile = "build.xml" target = "publish" />
+		<AntRecursiv dir = "./plugins" searchFile = "build.xml" target = "publish" />
+		<mkdir dir = "./publish" />
+		<mkdir dir = "./publish/plugins" />
+		<mkdir dir = "./publish/lib" />
+		<copy todir = "./publish/lib">
+			<fileset dir = "./lib" includes = "**/*.jar" />
+		</copy>
+		<copy todir = "./publish/lib">
+			<fileset dir = "./coresystem/lib" includes = "**/*.jar" />
+		</copy>
+		<copy todir = "./publish/lib">
+			<fileset dir = "./plugins" includes = "**/*.jar" excludes = "**/*_client.jar,**/*_server.jar" />
+		</copy>
+		<copy todir = "./publish/plugins">
+			<fileset dir = "./plugins" includes = "**/*_client.jar,**/*_server.jar" />
+		</copy>
+		
+		<delete file = "coremanifest.txt" quiet = "true" />
+		<LibCollector dir = "./lib" prefix = "./lib" mainClass = "de.berlios.marmota.core.server.Marmota" outfile = "coremanifest.txt" />
+		
+		<jar  compress = "true" jarfile = "./publish/marmota.jar" manifest = "coremanifest.txt">
+			<fileset dir = "./coresystem/bin" includes="**" />
+		</jar>
+		
+	</target>
+		
+</project>

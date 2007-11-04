@@ -1,0 +1,48 @@
+<project name = "MarmotaCore" default = "info" basedir = ".">
+	
+	<target name = "info">
+		<echo message = "This is the ant buildfile for MARMOTA-Core-System"/>
+		<echo message = "Please use the following syntax:"/>
+		<echo message = "ant clean           - cleanup all directories"/>
+		<echo message = "ant compile         - compile the marmota-core"/>
+		<echo message = "ant publish         - publish (jar) the core"/>
+	</target>
+	
+	<target name = "clean">
+		<echo message = "Now cleaning up the core"/>
+		<delete dir = "./bin" quiet = "true" includeEmptyDirs = "true" />
+		<delete dir = "./publish" quiet = "true" includeEmptyDirs = "true" />
+		<echo message = "Cleaning up of the core has done"/>
+	</target>
+	
+	<target name = "compile">
+		<mkdir dir = "./bin"/>
+		<javac debug = "false" deprecation = "false" destdir = "./bin" srcdir = "./src" >
+			<classpath>
+				<fileset dir = "./lib">
+					<include name = "**/*.jar/"/>
+				</fileset>
+				<fileset dir = "../lib">
+					<include name = "**/*.jar/"/>
+				</fileset>
+				<fileset dir = "../coresystem/bin">
+					<include name = "**"/>
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+	
+	<target name = "publish" depends = "compile">
+		<mkdir dir = "./publish" />
+		<jar  compress = "true" jarfile = "./publish/marmota_core_server.jar">
+			<fileset dir="./bin" includes="de/berlios/marmota/core/server/**" />
+			<fileset dir="./bin" includes="de/berlios/marmota/core/common/**" />
+		</jar>
+		<jar compress = "true" jarfile = "./publish/marmota_core_client.jar">
+			<fileset dir="./bin" includes="de/berlios/marmota/core/client/**" />
+			<fileset dir="./bin" includes="de/berlios/marmota/core/common/**" />
+		</jar>
+	</target>
+		
+		
+</project>

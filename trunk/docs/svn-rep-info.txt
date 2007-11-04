@@ -1,0 +1,37 @@
+Little information about the structure in the svn-repository.
+
+
++++ antextension
+ .
+ .+ coresystem
+ .
+ .+ docs
+ .
+ .+ lib
+ .
+ .+ plugins
+
+
+
+antextensions:
+contents the source and the codes for some own tasks to make
+it possible to build the project with ant
+
+
+coresystem
+contains the marmota-core to bring up the server.
+its structure is near to a plugin, but notice: the build-script
+has own rules for the core-system!
+
+
+docs
+some documents, license-texts and informations.
+
+
+lib
+3rd-party-libraries (.jars) should be here.
+
+
+plugins
+here is the place to store plugins which should be compiled with
+the core application.

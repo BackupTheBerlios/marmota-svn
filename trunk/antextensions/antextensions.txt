@@ -1,0 +1,18 @@
+AntExtensions
+
+In this directory are some extensions for ant to make it easier to build 
+Marmota wit ant.
+
+
+AntRecurser:
+It's an extension to search recursive in a direcory for other ant-build-files
+and call there target.
+With this extension it is possible to build the core and all plugins
+with only one buildfile.
+
+
+MFLibCollector:
+This little collection helps to build the project without any classpath problems.
+Before publishing the project, these extension can create an Class-Path:-Element
+for a Manifest-File.
+So it is possible to have more dynamic in the project. 
