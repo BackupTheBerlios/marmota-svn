@@ -16,9 +16,9 @@
 	<target name = "clean">
 		<delete dir = "./publish" quiet = "true" includeEmptyDirs = "true" />
 		<delete file = "coremanifest.txt" quiet = "true" />
+		<delete file = "coremanifest.txt" quiet = "true" />
 		<AntRecursiv dir = "./coresystem" searchFile = "build.xml" target = "clean" />
 		<AntRecursiv dir = "./plugins" searchFile = "build.xml" target = "clean" />
-		<delete file = "coremanifest.txt" quiet = "true" />
 	</target>
 	
 	<target name = "compilecore" >
@@ -55,6 +55,8 @@
 		<jar  compress = "true" jarfile = "./publish/marmota.jar" manifest = "coremanifest.txt">
 			<fileset dir = "./coresystem/bin" includes="**" />
 		</jar>
+		
+		<copy file = "./coresystem/marmota.cfg" tofile = "./publish/marmota.cfg" />
 		
 	</target>
 		

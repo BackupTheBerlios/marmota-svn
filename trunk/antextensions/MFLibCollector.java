@@ -76,7 +76,7 @@ public class MFLibCollector extends Task {
 				FileOutputStream fos = new FileOutputStream(new File(outfile));
 				fos.write("Main-Class: ".getBytes());
 				fos.write(mainClass.getBytes());
-				fos.write("\nClass-Path: ".getBytes());
+				fos.write("\nClass-Path: . ".getBytes());
 				fos.write(buffer.toString().getBytes());
 				fos.write("\n".getBytes());
 			}
