@@ -28,8 +28,15 @@
 				<fileset dir = "../coresystem/bin">
 					<include name = "**"/>
 				</fileset>
+				<fileset dir = ".">
+					<include name = "**"/>
+				</fileset>
 			</classpath>
 		</javac>
+		<echo message = "Copy resources"/>
+		<copy todir = "./bin" >
+			<fileset dir = "./src" includes = "**" excludes = "**/*.java" />
+		</copy>
 	</target>
 	
 	<target name = "publish" depends = "compile">

@@ -1,15 +1,3 @@
-package de.berlios.marmota.core.server;
-
-import java.net.URL;
-import java.util.Properties;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.SimpleLayout;
-
 /*
  * Marmota - Open-Source, easy to use Groupware
  * Copyright (C) 2007  The Marmota Team
@@ -28,6 +16,22 @@ import org.apache.log4j.SimpleLayout;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
+package de.berlios.marmota.core.server;
+
+import java.net.URL;
+import java.util.Properties;
+
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.SimpleLayout;
+
+import de.berlios.marmota.core.server.webserver.WebServer;
+
+
 /**
  * Main-Entry class for the server.
  * @author sebmeyer
@@ -42,7 +46,7 @@ public class Marmota {
 	/**
 	 * Static instance to use the logging-system
 	 */
-	private static Logger logger = Logger.getRootLogger();
+	public static Logger LOGGER = Logger.getRootLogger();
 	
 	/**
 	 * The programm's major-version (The 1 in Version 1.2)
@@ -63,6 +67,11 @@ public class Marmota {
 	 * The programm's version suffix (like alpha or beta)
 	 */
 	public static String VERSIONSUFFIX = "pre-alpha";
+	
+	/**
+	 * Webserver for the application
+	 */
+	private static WebServer webserver;
 
 	
 	/**
@@ -102,10 +111,48 @@ public class Marmota {
 		System.out.println("Visit: marmota.berlios.de");
 		loadConfig();
 		startingLogSystem();
+		startingWebServer();
 		displaySmallLicenseMessage();
 	}
 	
+	
+	/**
+	 * Start and init the webserver
+	 */
+	private static void startingWebServer() {
+		System.out.print("\nStarting the Webserver: ");
+		try {
+			int port = Integer.parseInt(config.getProperty("webserver_port"));
+			webserver = new WebServer(port);
+			webserver.start();
+			System.out.print(" OK (Port:" + port +")\n");
+		} catch (Exception e) {
+			LOGGER.fatal("Fatal error while init the webserver: " + e.getMessage());
+			LOGGER.fatal(e.getStackTrace());
+			System.exit(1);
+		}
+	}
+	
 
+	/**
+	 * This method will shutdown the server. The server will try to
+	 * shutdown controlled.
+	 * After a specified time the server will exit.
+	 * A warn-message to all clients will be send.
+	 * @param time Time in milliseconds before the serv goes down
+	 * @param message A message to be displayed on the clients and logged in the log-file
+	 */
+	public static void shutdownServer(int time, String message) {
+		try {
+			Thread.sleep(time);
+			LOGGER.info("Server shutdwon: " + message);
+			System.exit(0);
+		} catch (InterruptedException e) {
+			LOGGER.warn(e.getStackTrace());
+		}
+	}
+	
+	
 	/**
 	 * Init, config and starting the Log-System
 	 */
@@ -114,35 +161,35 @@ public class Marmota {
 		try {
 			SimpleLayout simpLayout = new SimpleLayout();
 			ConsoleAppender consoleAppender = new ConsoleAppender(simpLayout);
-			logger.addAppender(consoleAppender);
+			LOGGER.addAppender(consoleAppender);
 			PatternLayout patLayout = new PatternLayout("%d{ISO8601} %-5p [%t] %c: %m%n");
 			FileAppender fileAppender = new FileAppender(patLayout, "marmota_mess.log", false);
-			logger.addAppender(fileAppender);
+			LOGGER.addAppender(fileAppender);
 			String loglevel = config.getProperty("log_level");
 			// ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF
 			if (loglevel.toLowerCase().equals("all")) {
-				logger.setLevel(Level.ALL);
+				LOGGER.setLevel(Level.ALL);
 			} else if (loglevel.toLowerCase().equals("debug")) {
-				logger.setLevel(Level.DEBUG);
+				LOGGER.setLevel(Level.DEBUG);
 			} else if (loglevel.toLowerCase().equals("info")) {
-				logger.setLevel(Level.INFO);
+				LOGGER.setLevel(Level.INFO);
 			} else if (loglevel.toLowerCase().equals("warn")) {
-				logger.setLevel(Level.WARN);
+				LOGGER.setLevel(Level.WARN);
 			} else if (loglevel.toLowerCase().equals("error")) {
-				logger.setLevel(Level.ERROR);
+				LOGGER.setLevel(Level.ERROR);
 			} else if (loglevel.toLowerCase().equals("fatal")) {
-				logger.setLevel(Level.FATAL);
+				LOGGER.setLevel(Level.FATAL);
 			} else if (loglevel.toLowerCase().equals("off")) {
-				logger.setLevel(Level.FATAL);
+				LOGGER.setLevel(Level.FATAL);
 			} else {
 				System.out.print(" ... no cofig found, using WARN\n");
-				logger.setLevel(Level.WARN);
+				LOGGER.setLevel(Level.WARN);
 			}
 			System.out.print("  Loglevel is now: " + loglevel + "\n");
 		} catch(Exception ex) {
 			System.out.println(ex);
 		}
-		logger.info("Logging system init");
+		LOGGER.info("Logging system init");
 	}
 
 }

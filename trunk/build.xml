@@ -16,7 +16,10 @@
 	<target name = "clean">
 		<delete dir = "./publish" quiet = "true" includeEmptyDirs = "true" />
 		<delete file = "coremanifest.txt" quiet = "true" />
-		<delete file = "coremanifest.txt" quiet = "true" />
+		<delete>
+			<fileset dir = "." includes = "**~" />
+			<fileset dir = "." includes = "*.log" />
+		</delete>
 		<AntRecursiv dir = "./coresystem" searchFile = "build.xml" target = "clean" />
 		<AntRecursiv dir = "./plugins" searchFile = "build.xml" target = "clean" />
 	</target>
