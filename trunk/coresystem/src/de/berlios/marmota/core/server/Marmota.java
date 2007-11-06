@@ -19,8 +19,17 @@
 
 package de.berlios.marmota.core.server;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
 import java.net.URL;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.Properties;
+import java.util.Vector;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.FileAppender;
@@ -28,8 +37,13 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.SimpleLayout;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.AnnotationConfiguration;
+import org.hibernate.cfg.Configuration;
+import org.hibernate.cfg.SettingsFactory;
 
 import de.berlios.marmota.core.server.webserver.WebServer;
+import de.berlios.marmota.core.server.plugin.InitedPlugin;
 
 
 /**
@@ -46,7 +60,7 @@ public class Marmota {
 	/**
 	 * Static instance to use the logging-system
 	 */
-	public static Logger LOGGER = Logger.getRootLogger();
+	private static Logger LOGGER = Logger.getRootLogger();
 	
 	/**
 	 * The programm's major-version (The 1 in Version 1.2)
@@ -59,9 +73,20 @@ public class Marmota {
 	public static int MINORVERSION = 0;
 
 	/**
+	 * This Vector will contain the information about
+	 * all collected plugins
+	 */
+	private static Vector<InitedPlugin> PLUGINS = new Vector<InitedPlugin>();
+	
+	/**
 	 * The programm's name
 	 */
 	public static String PNAME = "Marmota";
+	
+	/**
+	 * The Registry for the RMI-System
+	 */
+	static Registry REGISTRY;
 	
 	/**
 	 * The programm's version suffix (like alpha or beta)
@@ -75,12 +100,77 @@ public class Marmota {
 
 	
 	/**
+	 * Collecting and init the plugins
+	 */
+	private static void collectPlugins() {
+		System.out.println("\nCollecting Plugins...");
+		// Getting all .jar-Files from the plugin-directory using a FileFilter
+		File pluginDir = new File("./plugins");
+		FileFilter jarFilter = new FileFilter() {
+			public boolean accept(File pathname) {
+				if (pathname.getName().toLowerCase().endsWith("_server.jar")) {
+					return true;
+				}
+				return false;
+			}
+		};
+		File[] files = pluginDir.listFiles(jarFilter);
+		if (files != null) {
+			for (File f : files) {
+				initPlugin(f);
+			}
+		}
+	}
+	
+	
+	/**
 	 * This will display a small license information
 	 */
 	private static void displaySmallLicenseMessage() {
 		System.out.println("\nThis program comes with ABSOLUTELY NO WARRANTY!");
 		System.out.println("This is free software, and you are welcome to redistribute it");
 		System.out.println("under certain conditions; read the 'license.txt' for details.");
+	}
+	
+	
+	/**
+	 * Return the Logger
+	 * @return the Logger
+	 */
+	public static Logger getLogger() {
+		return LOGGER;
+	}
+	
+	
+	public static Registry getRegistry() {
+		return REGISTRY;
+	}
+	
+	
+	/**
+	 * Reading the informations from the plugin's jar and init it.
+	 * @param f The jar-file of the plugin
+	 */
+	private static void initPlugin(File f) {
+		try {
+			LOGGER.debug("Try to init plugin: " + f.getName());
+			JarFile jar = new JarFile(f);
+			Manifest mf = jar.getManifest();
+			Attributes att = mf.getMainAttributes();
+			InitedPlugin plugin = new InitedPlugin();
+			plugin.setFile(f);
+			plugin.setAuthor(att.getValue("Author"));
+			plugin.setFullname(att.getValue("Full-Name"));
+			plugin.setName(att.getValue("Plugin-Name"));
+			plugin.setVersion(Double.parseDouble(att.getValue("Version")));
+			plugin.setMainclass(att.getValue("Plugin-Main-Class"));
+			LOGGER.debug("Plugin was init: File: " + f.getName() + "  Author: " + att.getValue("Author") +
+					" Fullname: " + att.getValue("Full-Name") + "  Name: " + att.getValue("Name") +
+					" Plugin-Main-Class: " + att.getValue("Plugin-Main-Class"));
+			LOGGER.info("Plugin was init: " + att.getValue("Name") + " from " + f.getName());
+		} catch (IOException e) {
+			LOGGER.error("Failed to load jar-plugin: " + f.getName() + " : " + e.getMessage());
+		}
 	}
 	
 	
@@ -110,36 +200,21 @@ public class Marmota {
 		System.out.println("(c) by the Marmota team (2007)");
 		System.out.println("Visit: marmota.berlios.de");
 		loadConfig();
-		startingLogSystem();
-		startingWebServer();
+		startLogSystem();
+		collectPlugins();
+		startHibernate();
+		startRMIServer();
+		startWebServer();
 		displaySmallLicenseMessage();
 	}
 	
 	
 	/**
-	 * Start and init the webserver
-	 */
-	private static void startingWebServer() {
-		System.out.print("\nStarting the Webserver: ");
-		try {
-			int port = Integer.parseInt(config.getProperty("webserver_port"));
-			webserver = new WebServer(port);
-			webserver.start();
-			System.out.print(" OK (Port:" + port +")\n");
-		} catch (Exception e) {
-			LOGGER.fatal("Fatal error while init the webserver: " + e.getMessage());
-			LOGGER.fatal(e.getStackTrace());
-			System.exit(1);
-		}
-	}
-	
-
-	/**
 	 * This method will shutdown the server. The server will try to
 	 * shutdown controlled.
 	 * After a specified time the server will exit.
 	 * A warn-message to all clients will be send.
-	 * @param time Time in milliseconds before the serv goes down
+	 * @param time Time in milliseconds before the servers goes down
 	 * @param message A message to be displayed on the clients and logged in the log-file
 	 */
 	public static void shutdownServer(int time, String message) {
@@ -149,14 +224,36 @@ public class Marmota {
 			System.exit(0);
 		} catch (InterruptedException e) {
 			LOGGER.warn(e.getStackTrace());
+			System.exit(0);
 		}
+	}
+	
+
+	/**
+	 * This will startup the Hibernate Framework
+	 */
+	private static void startHibernate() {
+		System.out.println("\nStarting Hibernate-Framework...");
+		AnnotationConfiguration configuration = new AnnotationConfiguration();
+		// Read the config from the marmota.cfg and put it into the Hibernate-Config
+		Properties props = new Properties();
+		props.setProperty("hibernate.connection.driver_class", config.getProperty("db_driver"));
+		props.setProperty("hibernate.connection.url", config.getProperty("db_conurl"));
+		props.setProperty("hibernate.connection.username", config.getProperty("db_user"));
+		props.setProperty("hibernate.connection.password", config.getProperty("db_pass"));
+		props.setProperty("hibernate.dialect", config.getProperty("db_dialect"));
+		props.setProperty("hibernate.hbm2ddl.auto", "create");
+		props.setProperty("hibernate.show_sql", config.getProperty("db_showsql"));
+		props.setProperty("hibernate.format_sql", config.getProperty("db_formatsql"));
+		configuration.setProperties(props);
+		SessionFactory sf = configuration.buildSessionFactory();
 	}
 	
 	
 	/**
 	 * Init, config and starting the Log-System
 	 */
-	private static void startingLogSystem() {
+	private static void startLogSystem() {
 		System.out.print("\nStarting the logging-system");
 		try {
 			SimpleLayout simpLayout = new SimpleLayout();
@@ -189,7 +286,44 @@ public class Marmota {
 		} catch(Exception ex) {
 			System.out.println(ex);
 		}
-		LOGGER.info("Logging system init");
+		LOGGER.info("Logging system init done");
+	}
+	
+	/**
+	 * Starting the RMI-Server
+	 */
+	private static void startRMIServer() {
+		System.out.print("\nStarting the RMI-Server: ");
+		try {
+			int port = Integer.parseInt(config.getProperty("rmiserver_port"));
+			LocateRegistry.createRegistry(port);
+			REGISTRY = LocateRegistry.getRegistry(port);
+			System.out.print(" OK (Port:" + port +")\n");
+			LOGGER.info("RMI-Server is up now on port " + port);
+		} catch (Exception e) {
+			LOGGER.fatal("Fatal error while init the RMI-Server: " + e.getMessage());
+			LOGGER.fatal(e.getStackTrace());
+			System.exit(1);
+		}
+	}
+	
+	
+	/**
+	 * Start and init the webserver
+	 */
+	private static void startWebServer() {
+		System.out.print("\nStarting the Webserver: ");
+		try {
+			int port = Integer.parseInt(config.getProperty("webserver_port"));
+			webserver = new WebServer(port);
+			webserver.start();
+			System.out.print(" OK (Port:" + port +")\n");
+			LOGGER.info("WebServer is up now on port " + port);
+		} catch (Exception e) {
+			LOGGER.fatal("Fatal error while init the webserver: " + e.getMessage());
+			LOGGER.fatal(e.getStackTrace());
+			System.exit(1);
+		}
 	}
 
 }

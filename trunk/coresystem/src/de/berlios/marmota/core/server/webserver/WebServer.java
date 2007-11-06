@@ -63,9 +63,9 @@ public class WebServer extends Thread {
 				ch.start();
 				idcounter++;
 			} catch (IOException e) {
-				Marmota.LOGGER.fatal("Critical exception in the webserver system!: " + e.getMessage());
-				Marmota.LOGGER.fatal(e.getStackTrace());
-				Marmota.LOGGER.fatal("Trying to shutdown the server!");
+				Marmota.getLogger().fatal("Critical exception in the webserver system!: " + e.getMessage());
+				Marmota.getLogger().fatal(e.getStackTrace());
+				Marmota.getLogger().fatal("Trying to shutdown the server!");
 				Marmota.shutdownServer(30000, "Exception in the Webserver, System will go down!");
 			}
 		}

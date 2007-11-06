@@ -70,14 +70,14 @@ public class ConnectionHandler extends Thread {
 	public ConnectionHandler(Socket socket, long handlerid) {
 		this.socket = socket;
 		this.handlerid = handlerid;
-		Marmota.LOGGER.debug("Connection handler init: " + handlerid + " from : " + socket.getInetAddress());
+		Marmota.getLogger().debug("Connection handler init: " + handlerid + " from : " + socket.getInetAddress());
 	}
 	
 	/* (non-Javadoc)
 	 * @see java.lang.Thread#run()
 	 */
 	public void run() {
-		Marmota.LOGGER.debug("Connection handler start: " + handlerid + " from : " + socket.getInetAddress());
+		Marmota.getLogger().debug("Connection handler start: " + handlerid + " from : " + socket.getInetAddress());
 		// Parsing incomin data
 		Vector<String> incomingLines = new Vector<String>();
 		try {
@@ -111,18 +111,18 @@ public class ConnectionHandler extends Thread {
 				}
 			}
 			// Which site should be send?
-			Marmota.LOGGER.info("Connection handler " + handlerid + "(" + socket.getInetAddress() + ") has a request for: " + requestedPage);
+			Marmota.getLogger().info("Connection handler " + handlerid + "(" + socket.getInetAddress() + ") has a request for: " + requestedPage);
 			if (requestedPage.equals("/") || requestedPage.equals("/index.html") || requestedPage.contains("..")) {
 				requestedPage = ("/start.html");
 			}
 			sendData(socket.getOutputStream(), requestedPage);
 			is.close();
 			socket.close();
-			Marmota.LOGGER.debug("Connection handler succesfully ends: " + handlerid + " from : " + socket.getInetAddress());
+			Marmota.getLogger().debug("Connection handler succesfully ends: " + handlerid + " from : " + socket.getInetAddress());
 		} catch (Exception e) {
-			Marmota.LOGGER.error("Error in handler " + handlerid + " : " + e.getMessage());
-			Marmota.LOGGER.error("Connection come from: " + socket.getInetAddress());
-			Marmota.LOGGER.error(e.getStackTrace());
+			Marmota.getLogger().error("Error in handler " + handlerid + " : " + e.getMessage());
+			Marmota.getLogger().error("Connection come from: " + socket.getInetAddress());
+			Marmota.getLogger().error(e.getStackTrace());
 		}
 	}
 	
@@ -175,21 +175,21 @@ public class ConnectionHandler extends Thread {
 			urlInput.close();
 			os.close();
 		} catch (FileNotFoundException e) {
-			Marmota.LOGGER.warn("Exception in handler " + handlerid + " while sending: " + e.getMessage());
-			Marmota.LOGGER.warn("handler " + handlerid + ": client request: " + page);
+			Marmota.getLogger().warn("Exception in handler " + handlerid + " while sending: " + e.getMessage());
+			Marmota.getLogger().warn("handler " + handlerid + ": client request: " + page);
 			try {
 				this.writeStringToStream(httpError(404, "Page not found"), os);
 			} catch (IOException e1) {
-				Marmota.LOGGER.error("Exception in handler " + handlerid + ", can't send errorpage from FNF" + e1.getMessage());
+				Marmota.getLogger().error("Exception in handler " + handlerid + ", can't send errorpage from FNF" + e1.getMessage());
 				e1.printStackTrace();
 			}
 		} catch (IOException e) {
-			Marmota.LOGGER.warn("Exception in handler " + handlerid + " while sending: " + e.getMessage());
-			Marmota.LOGGER.warn("\thandler " + handlerid + ": client request: " + page);
+			Marmota.getLogger().warn("Exception in handler " + handlerid + " while sending: " + e.getMessage());
+			Marmota.getLogger().warn("\thandler " + handlerid + ": client request: " + page);
 			try {
 				this.writeStringToStream(httpError(404, "unknown error"), os);
 			} catch (IOException e1) {
-				Marmota.LOGGER.error("Exception in handler " + handlerid + ", can't send errorpage" + e1.getMessage());
+				Marmota.getLogger().error("Exception in handler " + handlerid + ", can't send errorpage" + e1.getMessage());
 				e1.printStackTrace();
 			}
 		}
@@ -214,7 +214,7 @@ public class ConnectionHandler extends Thread {
 	*/
 	private String httpError(int code, String description) {
 		StringBuffer buffer = new StringBuffer();
-		Marmota.LOGGER.debug("Handler " + handlerid + " sends errorpage with: " + code + ", " + description);
+		Marmota.getLogger().debug("Handler " + handlerid + " sends errorpage with: " + code + ", " + description);
 		buffer.append("HTTP/1.0 " + code + " " + description + "\r\n");
 		buffer.append("Content-type: text/html\r\n\r\n");
 		buffer.append("<html>");
