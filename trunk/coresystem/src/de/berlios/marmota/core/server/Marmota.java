@@ -39,8 +39,6 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.SimpleLayout;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.AnnotationConfiguration;
-import org.hibernate.cfg.Configuration;
-import org.hibernate.cfg.SettingsFactory;
 
 import de.berlios.marmota.core.server.webserver.WebServer;
 import de.berlios.marmota.core.server.plugin.InitedPlugin;
@@ -97,6 +95,11 @@ public class Marmota {
 	 * Webserver for the application
 	 */
 	private static WebServer webserver;
+	
+	/**
+	 * Contains the Name of all client-plugins
+	 */
+	private static Vector<String> clientPluginNames = new Vector<String>();
 
 	
 	/**
@@ -202,10 +205,54 @@ public class Marmota {
 		loadConfig();
 		startLogSystem();
 		collectPlugins();
+		collectClientData();
 		startHibernate();
 		startRMIServer();
 		startWebServer();
 		displaySmallLicenseMessage();
+	}
+	
+	
+	/**
+	 * Collect the Data which will send via WebStart
+	 * to the client
+	 */
+	private static void collectClientData() {
+		LOGGER.info("Start Collecting Client-Data");
+		// Collecting all client-data in the plugin-directory
+		File dirFile = new File("./plugins");
+		FileFilter filter = new FileFilter() {
+			public boolean accept(File pathname) {
+				if (pathname.getName().toLowerCase().endsWith("_client.jar")) {
+					return true;
+				}
+				return false;
+			}
+		};
+		File[] files = dirFile.listFiles(filter);
+		if (files != null && files.length > 0) {
+			for (File f : files) {
+				LOGGER.info("Client-Data added: " + f.getName());
+				clientPluginNames.add(f.getName());
+			}
+		}
+		// Collecting the libraries for the clients
+		dirFile = new File("./lib/client");
+		filter = new FileFilter() {
+			public boolean accept(File pathname) {
+				if (pathname.getName().toLowerCase().endsWith(".jar")) {
+					return true;
+				}
+				return false;
+			}
+		};
+		files = dirFile.listFiles(filter);
+		if (files != null && files.length > 0) {
+			for (File f : files) {
+				LOGGER.info("Client-Lib-Data added: " + f.getName());
+				clientPluginNames.add("lib/" + f.getName());
+			}
+		}
 	}
 	
 	
@@ -325,5 +372,16 @@ public class Marmota {
 			System.exit(1);
 		}
 	}
+	
+	
+	/**
+	 * Returns the names of the plugin-files which contains the data
+	 * for the clients.
+	 * @return the names of the client-jars files
+	 */
+	public static Vector<String> getClientPluginNames() {
+		return clientPluginNames;
+	}
+	
 
 }

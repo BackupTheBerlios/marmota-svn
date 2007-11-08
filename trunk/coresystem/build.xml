@@ -11,7 +11,6 @@
 	<target name = "clean">
 		<echo message = "Now cleaning up the core"/>
 		<delete dir = "./bin" quiet = "true" includeEmptyDirs = "true" />
-		<delete dir = "./publish" quiet = "true" includeEmptyDirs = "true" />
 		<echo message = "Cleaning up of the core has done"/>
 	</target>
 	
@@ -40,12 +39,12 @@
 	</target>
 	
 	<target name = "publish" depends = "compile">
-		<mkdir dir = "./publish" />
-		<jar  compress = "true" jarfile = "./publish/marmota_core_server.jar">
+		<mkdir dir = "../publish/plugins" />
+		<jar  compress = "true" jarfile = "../publish/marmota.jar">
 			<fileset dir="./bin" includes="de/berlios/marmota/core/server/**" />
 			<fileset dir="./bin" includes="de/berlios/marmota/core/common/**" />
 		</jar>
-		<jar compress = "true" jarfile = "./publish/marmota_core_client.jar">
+		<jar compress = "true" jarfile = "../publish/plugins/marmota_client.jar">
 			<fileset dir="./bin" includes="de/berlios/marmota/core/client/**" />
 			<fileset dir="./bin" includes="de/berlios/marmota/core/common/**" />
 		</jar>

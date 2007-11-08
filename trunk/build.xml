@@ -40,11 +40,11 @@
 		<mkdir dir = "./publish/plugins" />
 		<mkdir dir = "./publish/lib" />
 		
-		<copy todir = "./publish/lib">
+		<copy todir = "./publish/lib/server">
 			<fileset dir = "./lib/server" includes = "**/*.jar" />
 		</copy>
-		<copy todir = "./publish/lib">
-			<fileset dir = "./plugins" includes = "**/*.jar" excludes = "**/*_client.jar,**/*_server.jar" />
+		<copy todir = "./publish/lib/client">
+			<fileset dir = "./lib/client" includes = "**/*.jar" />
 		</copy>
 		<copy todir = "./publish/plugins">
 			<fileset dir = "./plugins" includes = "**/*_client.jar,**/*_server.jar" />
@@ -52,7 +52,7 @@
 		
 		<delete file = "coremanifest.txt" quiet = "true" />
 		
-		<LibCollector dir = "./publish/lib" prefix = "./lib/" mainClass = "de.berlios.marmota.core.server.Marmota" outfile = "coremanifest.txt" />
+		<LibCollector dir = "./publish/lib/server" prefix = "./lib/server/" mainClass = "de.berlios.marmota.core.server.Marmota" outfile = "coremanifest.txt" />
 		
 		<jar  compress = "true" jarfile = "./publish/marmota.jar" manifest = "coremanifest.txt">
 			<fileset dir = "./coresystem/bin" includes="**" />

@@ -18,6 +18,7 @@
 
 package de.berlios.marmota.core.server.webserver;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -103,11 +104,15 @@ public class ConnectionHandler extends Thread {
 				}
 			}
 			String requestedPage = null;
+			String host = null;
 			for (int count = 0; count < incomingLines.size(); count++) {
 				if (incomingLines.get(count).startsWith("GET")) {
 					String[] getParts = incomingLines.get(count).split(" ");
 					requestedPage = getParts[1];
-					break;
+				}
+				if (incomingLines.get(count).startsWith("Host")) {
+					String[] getParts = incomingLines.get(count).split(" ");
+					host = getParts[1];
 				}
 			}
 			// Which site should be send?
@@ -115,7 +120,12 @@ public class ConnectionHandler extends Thread {
 			if (requestedPage.equals("/") || requestedPage.equals("/index.html") || requestedPage.contains("..")) {
 				requestedPage = ("/start.html");
 			}
-			sendData(socket.getOutputStream(), requestedPage);
+			// The subdirectory /client on will be used to send the clientdate to the clients
+			if (requestedPage != null && requestedPage.startsWith("/client/")) {
+				sendClientData(socket.getOutputStream(), requestedPage, host);
+			} else {
+				sendData(socket.getOutputStream(), requestedPage);
+			}
 			is.close();
 			socket.close();
 			Marmota.getLogger().debug("Connection handler succesfully ends: " + handlerid + " from : " + socket.getInetAddress());
@@ -127,6 +137,95 @@ public class ConnectionHandler extends Thread {
 	}
 	
 	
+	/**
+	 * Sending the client-data to the client
+	 * @param outputStream The OutputStream towards the client
+	 * @param requestedPage The requested Page
+	 * @param host The Host (send by the client in his request)
+	 */
+	private void sendClientData(OutputStream os,
+								String requestedPage, String host) {
+		String page = requestedPage.substring(8);
+		// First testing for .jnlp-descriptor
+		if (page.equals("marmota.jnlp")) {
+			sendjnlpdescriptor(os, host);
+		} else {
+			try {
+				Marmota.getLogger().debug("Request handler has a resource request for: " + page);
+				// Looking for the requested name in the pluings
+				Vector<String> pluginnames = Marmota.getClientPluginNames();
+				boolean pluginfound = false;
+				for (int i = 0; i < pluginnames.size(); i++) {
+					if (pluginnames.get(i).equals(page)) {
+						Marmota.getLogger().info("Sending client resource: " + page);
+						pluginfound = true;
+						File localfile = null;
+						if (page.startsWith("lib/")) {
+							localfile = new File("./lib/client/" + page.substring(4));
+						} else {
+							localfile = new File("./plugins/" + page);
+						}
+						InputStream is = localfile.toURI().toURL().openStream();
+						int in;
+						while ((in = is.read()) > -1) {
+							os.write(in);
+						}
+					}
+				}
+				if (!pluginfound) {
+					Marmota.getLogger().warn("Server can't find resource: " + page);
+					this.writeStringToStream(httpError(404, "Page not found"), os);
+				}
+				os.close();
+			} catch (IOException e) {
+				Marmota.getLogger().error("Error while sending resource to the client: " + page);
+				Marmota.getLogger().error(e.getMessage());
+			}
+		}
+	}
+	
+	
+	/**
+	 * Generating and sending the .jnlp-descritor
+	 * @param os OutputStream to send data to the client
+	 * @param host The adress which was send from the client with the http-request
+	 */
+	private void sendjnlpdescriptor(OutputStream os, String host) {
+		try {
+			// Getting all filenames of the client-plugins
+			Vector<String> pluginnames = Marmota.getClientPluginNames();
+			// Sending standard header
+			Marmota.getLogger().info("Connection handler " + handlerid + "(" + socket.getInetAddress() + "): sending jnlp");
+			sendHeader(os, new URL("http://" + host + "/client/marmota.jnlp"));
+			// Generating the descriptor
+			StringBuffer sendBuffer = new StringBuffer();
+			sendBuffer.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
+			sendBuffer.append("<jnlp codebase=\"http://" + host + "/client/\" href=\"marmota.jnlp\">\n");
+			sendBuffer.append("<information>\n");
+			sendBuffer.append("<title>Marmota - A Groupware System</title>\n");
+			sendBuffer.append("<vendor>The Marmota Development Team</vendor>\n");
+			sendBuffer.append("<homepage href=\"http://marmota.berlios.de\"/>\n");
+			sendBuffer.append("<description>An open source, easy to install Groupware-System</description>\n");
+			sendBuffer.append("</information>\n");
+			sendBuffer.append("<resources>\n");
+			sendBuffer.append("<j2se version=\"1.6+\"/>\n");
+			for (int i = 0; i < pluginnames.size(); i++) {
+				sendBuffer.append("<jar href=\"" + pluginnames.get(i) + "\"/>\n");
+			}
+			sendBuffer.append("</resources>\n");
+			sendBuffer.append("<application-desc main-class=\"de.berlios.marmota.core.client.MarmotaClient\"/>\n");
+			sendBuffer.append("</jnlp>\n");
+			os.write(sendBuffer.toString().getBytes());
+			os.close();
+		} catch (IOException e) {
+			Marmota.getLogger().error("Error in handler sending jnlp " + handlerid + " : " + e.getMessage());
+			Marmota.getLogger().error("Connection come from: " + socket.getInetAddress());
+			Marmota.getLogger().error(e.getStackTrace());
+			
+		}
+	}
+	
+
 	/**
 	 * Should be used to create a http-header for the data
 	 * which should be send
