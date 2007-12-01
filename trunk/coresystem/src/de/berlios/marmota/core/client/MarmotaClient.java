@@ -18,8 +18,6 @@
 
 package de.berlios.marmota.core.client;
 
-import javax.swing.JFrame;
-
 /**
  * This is the entry-class for the client.
  * It will be inited and started by the WebStart-System.

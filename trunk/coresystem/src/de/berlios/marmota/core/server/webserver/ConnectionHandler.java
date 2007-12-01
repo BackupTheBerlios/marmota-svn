@@ -71,14 +71,14 @@ public class ConnectionHandler extends Thread {
 	public ConnectionHandler(Socket socket, long handlerid) {
 		this.socket = socket;
 		this.handlerid = handlerid;
-		Marmota.getLogger().debug("Connection handler init: " + handlerid + " from : " + socket.getInetAddress());
+		Marmota.getLogger().debug("Conhandler: " + handlerid + " INIT from : " + socket.getInetAddress());
 	}
 	
 	/* (non-Javadoc)
 	 * @see java.lang.Thread#run()
 	 */
 	public void run() {
-		Marmota.getLogger().debug("Connection handler start: " + handlerid + " from : " + socket.getInetAddress());
+		Marmota.getLogger().debug("Conhandler: " + handlerid + " START from : " + socket.getInetAddress());
 		// Parsing incomin data
 		Vector<String> incomingLines = new Vector<String>();
 		try {
@@ -97,6 +97,7 @@ public class ConnectionHandler extends Thread {
 						break;
 					} else {
 						incomingLines.add(buffer.toString());
+						Marmota.getLogger().debug("Conhandler: " + handlerid + " In from Client: " + buffer.toString());
 						buffer = new StringBuffer();
 					}
 				} else {
@@ -116,7 +117,7 @@ public class ConnectionHandler extends Thread {
 				}
 			}
 			// Which site should be send?
-			Marmota.getLogger().info("Connection handler " + handlerid + "(" + socket.getInetAddress() + ") has a request for: " + requestedPage);
+			Marmota.getLogger().info("Conhandler: " + handlerid + " REQUEST from " + socket.getInetAddress() + ") for: " + requestedPage);
 			if (requestedPage.equals("/") || requestedPage.equals("/index.html") || requestedPage.contains("..")) {
 				requestedPage = ("/start.html");
 			}
@@ -128,10 +129,10 @@ public class ConnectionHandler extends Thread {
 			}
 			is.close();
 			socket.close();
-			Marmota.getLogger().debug("Connection handler succesfully ends: " + handlerid + " from : " + socket.getInetAddress());
+			Marmota.getLogger().debug("Conhandler: " + handlerid + " ENDS succesfully from : " + socket.getInetAddress());
 		} catch (Exception e) {
-			Marmota.getLogger().error("Error in handler " + handlerid + " : " + e.getMessage());
-			Marmota.getLogger().error("Connection come from: " + socket.getInetAddress());
+			Marmota.getLogger().error("Conhandler: " + handlerid + " ERROR "  + e.getMessage());
+			Marmota.getLogger().error("Conhandler: " + handlerid + " ERROR - Connections comes from: " + socket.getInetAddress());
 			Marmota.getLogger().error(e.getStackTrace());
 		}
 	}
@@ -151,13 +152,13 @@ public class ConnectionHandler extends Thread {
 			sendjnlpdescriptor(os, host);
 		} else {
 			try {
-				Marmota.getLogger().debug("Request handler has a resource request for: " + page);
+				Marmota.getLogger().debug("Conhandler: " + handlerid + " REQUEST RESOURCE for: " + page);
 				// Looking for the requested name in the pluings
 				Vector<String> pluginnames = Marmota.getClientPluginNames();
 				boolean pluginfound = false;
 				for (int i = 0; i < pluginnames.size(); i++) {
 					if (pluginnames.get(i).equals(page)) {
-						Marmota.getLogger().info("Sending client resource: " + page);
+						Marmota.getLogger().info("Conhandler: " + handlerid + " SEND client resource: " + page);
 						pluginfound = true;
 						File localfile = null;
 						if (page.startsWith("lib/")) {
@@ -173,13 +174,12 @@ public class ConnectionHandler extends Thread {
 					}
 				}
 				if (!pluginfound) {
-					Marmota.getLogger().warn("Server can't find resource: " + page);
+					Marmota.getLogger().warn("Conhandler: " + handlerid + " WARN no such resource: " + page);
 					this.writeStringToStream(httpError(404, "Page not found"), os);
 				}
 				os.close();
 			} catch (IOException e) {
-				Marmota.getLogger().error("Error while sending resource to the client: " + page);
-				Marmota.getLogger().error(e.getMessage());
+				Marmota.getLogger().error("Conhandler: " + handlerid + " ERROR while SENDING RESOURCE to the client: " + page + " : "+ e.getMessage());
 			}
 		}
 	}
@@ -218,8 +218,8 @@ public class ConnectionHandler extends Thread {
 			os.write(sendBuffer.toString().getBytes());
 			os.close();
 		} catch (IOException e) {
-			Marmota.getLogger().error("Error in handler sending jnlp " + handlerid + " : " + e.getMessage());
-			Marmota.getLogger().error("Connection come from: " + socket.getInetAddress());
+			Marmota.getLogger().error("Connection handler " + handlerid + " ERROR sending jnlp  : " + e.getMessage());
+			Marmota.getLogger().error("Connection handler " + handlerid + " from: " + socket.getInetAddress());
 			Marmota.getLogger().error(e.getStackTrace());
 			
 		}
@@ -274,21 +274,21 @@ public class ConnectionHandler extends Thread {
 			urlInput.close();
 			os.close();
 		} catch (FileNotFoundException e) {
-			Marmota.getLogger().warn("Exception in handler " + handlerid + " while sending: " + e.getMessage());
-			Marmota.getLogger().warn("handler " + handlerid + ": client request: " + page);
+			Marmota.getLogger().warn("Connection handler " + handlerid + " EXCEPTION  while sending: " + e.getMessage());
+			Marmota.getLogger().warn("Connection handler " + handlerid + " can't find requested page: " + page);
 			try {
 				this.writeStringToStream(httpError(404, "Page not found"), os);
 			} catch (IOException e1) {
-				Marmota.getLogger().error("Exception in handler " + handlerid + ", can't send errorpage from FNF" + e1.getMessage());
+				Marmota.getLogger().error("Connection handler " + handlerid + " ERROR : can't send errorpage from FNF" + e1.getMessage());
 				e1.printStackTrace();
 			}
 		} catch (IOException e) {
-			Marmota.getLogger().warn("Exception in handler " + handlerid + " while sending: " + e.getMessage());
-			Marmota.getLogger().warn("\thandler " + handlerid + ": client request: " + page);
+			Marmota.getLogger().warn("Connection handler " + handlerid + " EXCEPTION " + " while sending: " + e.getMessage());
+			Marmota.getLogger().warn("Connection handler " + handlerid + " EXCEPTION : client request: " + page);
 			try {
 				this.writeStringToStream(httpError(404, "unknown error"), os);
 			} catch (IOException e1) {
-				Marmota.getLogger().error("Exception in handler " + handlerid + ", can't send errorpage" + e1.getMessage());
+				Marmota.getLogger().error("Connection handler " + handlerid + " ERROR in handler, can't send errorpage" + e1.getMessage());
 				e1.printStackTrace();
 			}
 		}
