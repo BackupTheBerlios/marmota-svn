@@ -1,6 +1,6 @@
 /*
  * Marmota - Open-Source, easy to use Groupware
- * Copyright (C) 2007  The Marmota Team
+ * Copyright (C) 2007, 2008  The Marmota Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,6 +62,14 @@ public class ConnectionHandler extends Thread {
 	/** Internal id for the handler */
 	long handlerid;
 	
+	/**
+	 * The client will send a HOST-Information in his request.
+	 * So we know what is the name of the server for the host.
+	 * We need this information to give it back to the marmota-client, 
+	 * because the client must know hot to reach the server.
+	 */
+	String SERVER_HOST = null;
+	
 	
 	/**
 	 * Create the Handler
@@ -105,15 +113,17 @@ public class ConnectionHandler extends Thread {
 				}
 			}
 			String requestedPage = null;
-			String host = null;
+			String host_with_port = null;
 			for (int count = 0; count < incomingLines.size(); count++) {
+				// System.out.println("Incoming request: " + incomingLines.get(count));
 				if (incomingLines.get(count).startsWith("GET")) {
 					String[] getParts = incomingLines.get(count).split(" ");
 					requestedPage = getParts[1];
 				}
 				if (incomingLines.get(count).startsWith("Host")) {
 					String[] getParts = incomingLines.get(count).split(" ");
-					host = getParts[1];
+					host_with_port = getParts[1];
+					SERVER_HOST = host_with_port.split(":")[0];
 				}
 			}
 			// Which site should be send?
@@ -123,7 +133,7 @@ public class ConnectionHandler extends Thread {
 			}
 			// The subdirectory /client on will be used to send the clientdate to the clients
 			if (requestedPage != null && requestedPage.startsWith("/client/")) {
-				sendClientData(socket.getOutputStream(), requestedPage, host);
+				sendClientData(socket.getOutputStream(), requestedPage, host_with_port);
 			} else {
 				sendData(socket.getOutputStream(), requestedPage);
 			}
@@ -213,7 +223,10 @@ public class ConnectionHandler extends Thread {
 				sendBuffer.append("<jar href=\"" + pluginnames.get(i) + "\"/>\n");
 			}
 			sendBuffer.append("</resources>\n");
-			sendBuffer.append("<application-desc main-class=\"de.berlios.marmota.core.client.MarmotaClient\"/>\n");
+			sendBuffer.append("<application-desc main-class=\"de.berlios.marmota.core.client.MarmotaClient\">\n");
+			sendBuffer.append("<argument>" + SERVER_HOST + "</argument>\n");
+			sendBuffer.append("<argument>" + Marmota.CONFIG.getProperty("rmiserver_port") + "</argument>\n");
+			sendBuffer.append("</application-desc>\n");
 			sendBuffer.append("</jnlp>\n");
 			os.write(sendBuffer.toString().getBytes());
 			os.close();

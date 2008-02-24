@@ -1,0 +1,54 @@
+How to compile Marmota
+======================
+
+
+This is an introduction hwo to comile marmota.
+The Ant-Scripts, and its Extensions, are developed to work with a running GNU/Linux-OS. Actually [1] there seems to be ar problem compiling the project while running Windows, within one of the Ant-Extensions.
+
+This is will only explain how to compile the core-application and the core-plugins. An introduction to write and compile own extensions will follow in another document.
+
+The whole compile-system base on the main-"build.xml" in the root directory. It will call all the "build.xml"-files in the subdirectories.
+The core and every plugin must have its own "build.xml" and it can be called directly and stand alone. But note: Plugins must have the core-sytem in the classpath.
+
+To compile the core you need:
+
+- Java Development Kit (JDK) >= 1.6 (Java 6)
+- Ant (an build-tool)
+
+
+So you can call the ant-script with the command:
+
+ant [option]
+
+[option] can be:
+
+     clean           - cleanup all directories
+     compilecore     - compile marmota core
+     compileplugins  - compile marmota core
+     publish         - compile and publish
+                       the core and all plugins
+
+
+
+By the way, all way: The plugins should hava the following Ant-Syntax:
+
+
+ant [option]
+
+[option] can be:
+
+     ant clean           - cleanup all directories
+     ant compile         - compile plugin
+     ant publish         - publish the plugin
+
+
+If you run the ant-script in the root-directory, it will call all ant-scripts recursiv in the subdirectories with the same opton.
+So, if you run "ant compile" in the root directory, it will run all other scripts with the option "compile".
+
+
+
+
+/sebmeyer@berlios.de
+
+
+[1]  01.02.2008

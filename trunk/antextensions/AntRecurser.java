@@ -78,7 +78,8 @@ public class AntRecurser extends Task {
 				} else {
 					if (childFile.getName().toLowerCase().equals(searchFile.toLowerCase())) {
 						System.out.println("Workin with BUILD-FILE: " + childFile.getPath());
-						String command = "ant " + target + " " + childFile.getName();
+						// String command = "ant " + target + " " + childFile.getName();
+						String command = "ant " + target;
 						Process p = Runtime.getRuntime().exec(command, null, childFile.getParentFile());
 						p.waitFor();
 						BufferedInputStream bis = new BufferedInputStream(p.getInputStream());

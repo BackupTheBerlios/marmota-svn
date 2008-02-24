@@ -1,6 +1,6 @@
 /*
  * Marmota - Open-Source, easy to use Groupware
- * Copyright (C) 2007  The Marmota Team
+ * Copyright (C) 2007, 2008  The Marmota Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Properties;
 import java.util.Vector;
 import java.util.jar.Attributes;
@@ -37,9 +38,15 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.SimpleLayout;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.AnnotationConfiguration;
+import org.hibernate.Transaction;
 
+import de.berlios.marmota.core.common.userManagment.Group;
+import de.berlios.marmota.core.common.userManagment.User;
+import de.berlios.marmota.core.common.userManagment.UserRemoteInterface;
+import de.berlios.marmota.core.server.userManagment.UserManagment;
 import de.berlios.marmota.core.server.webserver.WebServer;
 import de.berlios.marmota.core.server.plugin.InitedPlugin;
 
@@ -53,7 +60,7 @@ public class Marmota {
 	/**
 	 * Contains the configuration-file marmota.cfg
 	 */
-	static Properties config = new Properties();
+	public static Properties CONFIG = new Properties();
 	
 	/**
 	 * Static instance to use the logging-system
@@ -100,13 +107,18 @@ public class Marmota {
 	 * Contains the Name of all client-plugins
 	 */
 	private static Vector<String> clientPluginNames = new Vector<String>();
+	
+	/**
+	 * Hibernate's Session-Factory.
+	 */
+	public static SessionFactory SESSION_FACTORY;
 
 	
 	/**
 	 * Collecting and init the plugins
 	 */
 	private static void collectPlugins() {
-		System.out.println("\nCollecting Plugins...");
+		LOGGER.info("Collecting Server Plugins...");
 		// Getting all .jar-Files from the plugin-directory using a FileFilter
 		File pluginDir = new File("./plugins");
 		FileFilter jarFilter = new FileFilter() {
@@ -184,7 +196,7 @@ public class Marmota {
 		System.out.print("\nLoading Config: ");
 		try {
 			URL url = Marmota.class.getClass().getResource("/marmota.cfg");
-			config.load(url.openStream());
+			CONFIG.load(url.openStream());
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -207,9 +219,52 @@ public class Marmota {
 		collectPlugins();
 		collectClientData();
 		startHibernate();
+		mapHibernateDataClasses();
 		startRMIServer();
 		startWebServer();
 		displaySmallLicenseMessage();
+		
+		/*
+		// Hibernate Test
+		System.out.println("--- HIBENATE TEST STARTING ---");
+		User u = new User();
+		u.setFullName("Sebastian Meyer");
+		u.setUsername("Test");
+		u.setPassword("Password");
+		u.setComment("Comment");
+		Group g1 = new Group();
+		g1.setGroupname("Gruppe 1");
+		Group g2 = new Group();
+		g2.setGroupname("Gruppe 2");
+		u.getGroups().add(g1);
+		u.getGroups().add(g2);
+		Session session = Marmota.SESSION_FACTORY.openSession();
+		Transaction trans = session.beginTransaction();
+		try {
+			for (Group g : u.getGroups()) {
+				session.save(g);
+			}
+			session.save(u);
+			trans.commit();
+			session.close();
+		} catch (Exception e) {
+			if (trans.isActive()) {
+				trans.rollback();
+			}
+			if (session.isOpen()) {
+				session.close();
+			}
+			e.printStackTrace();
+		}
+		System.out.println("DONE!");*/
+	}
+	
+	
+	/**
+	 * Giving the Mapping-Data to the Hibernate-Framework.
+	 * This should be collected from the core and the plugins.
+	 */
+	private static void mapHibernateDataClasses() {
 	}
 	
 	
@@ -280,20 +335,24 @@ public class Marmota {
 	 * This will startup the Hibernate Framework
 	 */
 	private static void startHibernate() {
-		System.out.println("\nStarting Hibernate-Framework...");
+		LOGGER.info("Starting Hibernate-Framework...");
 		AnnotationConfiguration configuration = new AnnotationConfiguration();
 		// Read the config from the marmota.cfg and put it into the Hibernate-Config
 		Properties props = new Properties();
-		props.setProperty("hibernate.connection.driver_class", config.getProperty("db_driver"));
-		props.setProperty("hibernate.connection.url", config.getProperty("db_conurl"));
-		props.setProperty("hibernate.connection.username", config.getProperty("db_user"));
-		props.setProperty("hibernate.connection.password", config.getProperty("db_pass"));
-		props.setProperty("hibernate.dialect", config.getProperty("db_dialect"));
-		props.setProperty("hibernate.hbm2ddl.auto", "create");
-		props.setProperty("hibernate.show_sql", config.getProperty("db_showsql"));
-		props.setProperty("hibernate.format_sql", config.getProperty("db_formatsql"));
+		props.setProperty("hibernate.connection.driver_class", CONFIG.getProperty("db_driver"));
+		props.setProperty("hibernate.connection.url", CONFIG.getProperty("db_conurl"));
+		props.setProperty("hibernate.connection.username", CONFIG.getProperty("db_user"));
+		props.setProperty("hibernate.connection.password", CONFIG.getProperty("db_pass"));
+		props.setProperty("hibernate.dialect", CONFIG.getProperty("db_dialect"));
+		props.setProperty("hibernate.hbm2ddl.auto", "update");
+		props.setProperty("hibernate.show_sql", CONFIG.getProperty("db_showsql"));
+		props.setProperty("hibernate.format_sql", CONFIG.getProperty("db_formatsql"));
 		configuration.setProperties(props);
-		SessionFactory sf = configuration.buildSessionFactory();
+		LOGGER.info("[Marmota Hibernate] Collecting Hibernate-Mapping-Data");
+		configuration.addAnnotatedClass(de.berlios.marmota.core.common.userManagment.User.class);
+		configuration.addAnnotatedClass(de.berlios.marmota.core.common.userManagment.Group.class);
+		configuration.buildMappings();
+		SESSION_FACTORY = configuration.buildSessionFactory();
 	}
 	
 	
@@ -309,7 +368,7 @@ public class Marmota {
 			PatternLayout patLayout = new PatternLayout("%d{ISO8601} %-5p [%t] %c: %m%n");
 			FileAppender fileAppender = new FileAppender(patLayout, "marmota_mess.log", false);
 			LOGGER.addAppender(fileAppender);
-			String loglevel = config.getProperty("log_level");
+			String loglevel = CONFIG.getProperty("log_level");
 			// ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF
 			if (loglevel.toLowerCase().equals("all")) {
 				LOGGER.setLevel(Level.ALL);
@@ -342,17 +401,20 @@ public class Marmota {
 	private static void startRMIServer() {
 		System.out.print("\nStarting the RMI-Server: ");
 		try {
-			int port = Integer.parseInt(config.getProperty("rmiserver_port"));
+			int port = Integer.parseInt(CONFIG.getProperty("rmiserver_port"));
 			LocateRegistry.createRegistry(port);
 			REGISTRY = LocateRegistry.getRegistry(port);
 			System.out.print(" OK (Port:" + port +")\n");
 			LOGGER.info("RMI-Server is up now on port " + port);
+			UserManagment usermanagment = new UserManagment();
+			UserRemoteInterface uri = (UserRemoteInterface) UnicastRemoteObject.exportObject(usermanagment, 0);
+			REGISTRY.bind("UserManagment", uri);
 		} catch (Exception e) {
 			LOGGER.fatal("Fatal error while init the RMI-Server: " + e.getMessage());
 			LOGGER.fatal(e.getStackTrace());
 			System.exit(1);
 		}
-	}
+}
 	
 	
 	/**
@@ -361,7 +423,7 @@ public class Marmota {
 	private static void startWebServer() {
 		System.out.print("\nStarting the Webserver: ");
 		try {
-			int port = Integer.parseInt(config.getProperty("webserver_port"));
+			int port = Integer.parseInt(CONFIG.getProperty("webserver_port"));
 			webserver = new WebServer(port);
 			webserver.start();
 			System.out.print(" OK (Port:" + port +")\n");

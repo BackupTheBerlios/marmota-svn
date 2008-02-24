@@ -16,7 +16,7 @@
 	
 	<target name = "compile">
 		<mkdir dir = "./bin"/>
-		<javac debug = "false" deprecation = "false" destdir = "./bin" srcdir = "./src" >
+		<javac debug="true" debuglevel="lines,source,vars" deprecation = "false" destdir = "./bin" srcdir = "./src" >
 			<classpath>
 				<fileset dir = "./lib">
 					<include name = "**/*.jar/"/>

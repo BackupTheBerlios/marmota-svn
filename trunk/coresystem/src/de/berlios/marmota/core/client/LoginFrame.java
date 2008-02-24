@@ -1,6 +1,6 @@
 /*
  * Marmota - Open-Source, easy to use Groupware
- * Copyright (C) 2007  The Marmota Team
+ * Copyright (C) 2007, 2008  The Marmota Team
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,11 +18,22 @@
 
 package de.berlios.marmota.core.client;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.rmi.AccessException;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+
+import de.berlios.marmota.core.common.userManagment.User;
+import de.berlios.marmota.core.common.userManagment.UserRemoteInterface;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -40,7 +51,7 @@ public class LoginFrame extends JFrame {
 	JTextField userField = new JTextField(20);
 	
 	/** Textfield for the password */
-	JTextField passField = new JTextField(20);
+	JPasswordField passField = new JPasswordField(20);
 	
 	/** OK Button */
 	JButton okBut = new JButton("OK");
@@ -74,11 +85,61 @@ public class LoginFrame extends JFrame {
 		JPanel southpanel = new JPanel();
 		
 		southpanel.add(okBut);
+		okBut.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				performLoginPressed();
+			}
+		});
+		
 		southpanel.add(cancelBut);
+		cancelBut.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				performCancelPressed();
+			}
+		});
 		
 		panel.add(southpanel, "south");
 		
 		this.add(panel);
+	}
+
+
+	/**
+	 * Will be called when pressing the "OK"-Button
+	 */
+	protected void performLoginPressed() {
+		try {
+			UserRemoteInterface userManagment = (UserRemoteInterface) MarmotaClient.SERVER_REGISTRY.lookup("UserManagment");
+			StringBuffer pass = new StringBuffer();
+			for (int i = 0; i < passField.getPassword().length; i++) {
+				pass.append(passField.getPassword()[i]);
+			}
+			User user = userManagment.login(userField.getText(), pass.toString());
+			if (user == null) {
+				JOptionPane.showMessageDialog(this, "Username or password wrong!", "Failed!", JOptionPane.ERROR_MESSAGE);
+			} else {
+				MarmotaClient.setCurrentuser(user);
+				MarmotaClient.showMainWindow();
+				this.dispose();
+			}
+		} catch (AccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NotBoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	
+	/**
+	 * Will be called when pressing the "Cancel"-Button 
+	 */
+	protected void performCancelPressed() {
+		System.exit(0);
 	}
 
 }

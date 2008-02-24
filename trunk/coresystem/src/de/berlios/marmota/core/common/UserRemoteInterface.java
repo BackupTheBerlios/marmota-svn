@@ -16,18 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.berlios.marmota.core.server.plugin;
+package de.berlios.marmota.core.common;
+
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+
+
 
 /**
- * This interface is the base for every plugin, and
- * every plugin must have a "main-class" which implements
- * this interface. </br></br>
- * 
- * To write your own plugin please reffer to the project's
- * homepage.
+ * This is the Remote-Interface which will be used for the RMI-Communications.
+ * It should be the only way for the client to perform user-operations on the server
  * 
  * @author sebmeyer
  */
-public interface Plugin {
+public interface UserRemoteInterface extends Remote {
+	
+	public boolean addOrUpdateUser(User user) throws RemoteException;
+	
+	public User getUserByID(int id) throws RemoteException;
+	
+	public User getUserByName(String uname) throws RemoteException;
+	
+	public boolean deleteUserByID(int id) throws RemoteException;
+	
+	public User login(String username, String password) throws RemoteException;
+	
 
 }

@@ -16,18 +16,50 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.berlios.marmota.core.server.plugin;
+package de.berlios.marmota.core.common.UserManagment;
+
+import java.io.Serializable;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 /**
- * This interface is the base for every plugin, and
- * every plugin must have a "main-class" which implements
- * this interface. </br></br>
- * 
- * To write your own plugin please reffer to the project's
- * homepage.
- * 
+ * This represents the User-Groups in Marmota
  * @author sebmeyer
+ *
  */
-public interface Plugin {
+@Entity
+@Table(name = "marmota_core_group")
+public class Group implements Serializable {
+	
+	
+	private Integer id;
+	
+	private String groupname;
+
+	
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	public Integer getId() {
+		return id;
+	}
+
+	@Column
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public String getGroupname() {
+		return groupname;
+	}
+
+	public void setGroupname(String groupname) {
+		this.groupname = groupname;
+	}
+	
 
 }
