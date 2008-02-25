@@ -29,7 +29,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
@@ -112,7 +111,10 @@ public class User implements Serializable {
 	}
 	
 	public void setGroups(List<Group> groups) {
-		this.groups = groups;
+		this.groups.clear();
+		if (groups != null) {
+			this.groups.addAll(groups);
+		}
 	}
 	
 	public void setId(Integer id) {

@@ -38,13 +38,9 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.SimpleLayout;
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.AnnotationConfiguration;
-import org.hibernate.Transaction;
 
-import de.berlios.marmota.core.common.userManagment.Group;
-import de.berlios.marmota.core.common.userManagment.User;
 import de.berlios.marmota.core.common.userManagment.UserRemoteInterface;
 import de.berlios.marmota.core.server.userManagment.UserManagment;
 import de.berlios.marmota.core.server.webserver.WebServer;

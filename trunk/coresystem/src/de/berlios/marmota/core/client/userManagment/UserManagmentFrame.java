@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Vector;
 
 import javax.swing.AbstractListModel;
-import javax.swing.DefaultListCellRenderer;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -442,12 +441,6 @@ public class UserManagmentFrame extends javax.swing.JFrame {
     // End of variables declaration
     
 
-    private class GroupListRenderer extends DefaultListCellRenderer {
-    	
-    	
-    	
-    }
-    
     
     /**
      * Internal class for displaying the groups
