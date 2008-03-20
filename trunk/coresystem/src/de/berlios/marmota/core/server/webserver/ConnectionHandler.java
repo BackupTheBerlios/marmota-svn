@@ -194,6 +194,7 @@ public class ConnectionHandler extends Thread {
             				ArrayList<String> optionalHeaderLines = new ArrayList<String>();
             				optionalHeaderLines.add("Content-Length: " + localfile.length());
             				this.sendHeader(os, localfile.toURI().toURL(), optionalHeaderLines);
+            				// Sending data to client
             				int in = 0;
             				int bufferCounter = 0;
             				byte[] sendBuffer = new byte[SEND_BUFFER_SIZE];

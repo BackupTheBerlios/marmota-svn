@@ -196,6 +196,8 @@ public class Marmota {
 			
 		} catch (Exception e) {
 			e.printStackTrace();
+			System.out.println("\n Can't load config-file MARMOTA.CFG.");
+			System.exit(1);
 		}
 		System.out.println("OK");
 	}
@@ -219,40 +221,6 @@ public class Marmota {
 		startRMIServer();
 		startWebServer();
 		displaySmallLicenseMessage();
-		
-		/*
-		// Hibernate Test
-		System.out.println("--- HIBENATE TEST STARTING ---");
-		User u = new User();
-		u.setFullName("Sebastian Meyer");
-		u.setUsername("Test");
-		u.setPassword("Password");
-		u.setComment("Comment");
-		Group g1 = new Group();
-		g1.setGroupname("Gruppe 1");
-		Group g2 = new Group();
-		g2.setGroupname("Gruppe 2");
-		u.getGroups().add(g1);
-		u.getGroups().add(g2);
-		Session session = Marmota.SESSION_FACTORY.openSession();
-		Transaction trans = session.beginTransaction();
-		try {
-			for (Group g : u.getGroups()) {
-				session.save(g);
-			}
-			session.save(u);
-			trans.commit();
-			session.close();
-		} catch (Exception e) {
-			if (trans.isActive()) {
-				trans.rollback();
-			}
-			if (session.isOpen()) {
-				session.close();
-			}
-			e.printStackTrace();
-		}
-		System.out.println("DONE!");*/
 	}
 	
 	

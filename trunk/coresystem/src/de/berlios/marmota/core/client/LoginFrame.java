@@ -99,7 +99,6 @@ public class LoginFrame extends JFrame {
 		});
 		
 		panel.add(southpanel, "south");
-		
 		this.add(panel);
 	}
 
